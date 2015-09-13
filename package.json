@@ -1,0 +1,25 @@
+{
+  "name": "example",
+  "version": "0.0.0",
+  "private": true,
+  "author": "Andre Staltz",
+  "license": "MIT",
+  "dependencies": {
+    "@cycle/core": "3.1.x",
+    "@cycle/dom": "5.1.x",
+    "express": "^4.13.3",
+    "ws": "^0.8.0"
+  },
+  "devDependencies": {
+    "browserify": "11.0.1",
+    "babel": "5.6.x",
+    "babelify": "6.1.x"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prebrowserify": "mkdir -p dist",
+    "browserify": "browserify src/main.js -t babelify --outfile dist/main.js",
+    "watchify": "watchify src/main.js -t babelify --outfile dist/main.js",
+    "start": "npm install && npm run browserify && node index.js"
+  }
+}
