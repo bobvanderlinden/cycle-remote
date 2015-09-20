@@ -17,9 +17,9 @@ wss.on('connection', function connection(ws) {
   // or ws.upgradeReq.headers.cookie (see http://stackoverflow.com/a/16395220/151312)
   console.log('connected');
   connections.push(ws);
-  actions.forEach(function(action) {
-    ws.send(action);
-  });
+  // actions.forEach(function(action) {
+  //   ws.send(action);
+  // });
 
   ws.on('message', function incoming(message) {
     console.log('broadcast', message);
