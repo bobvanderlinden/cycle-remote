@@ -38,7 +38,7 @@ class TimedArray extends Array {
     return i;
   }
   sliceAtUntil(timeAt, timeUntil) {
-    if (timeAt > timeUntil) { throw new Error('timeAt is greater than timeUntil')}
+    if (timeAt > timeUntil) { throw new Error('timeAt is greater than timeUntil'); }
     var fromIndex = this.indexAtOrAfterTime(timeAt);
     var untilIndex = this.indexBeforeTime(timeUntil);
     if (fromIndex === -1) {
