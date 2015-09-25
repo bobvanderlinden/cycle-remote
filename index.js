@@ -4,7 +4,7 @@ var server = require('http').createServer()
   , wss = new WebSocketServer({ server: server })
   , express = require('express')
   , app = express()
-  , port = 4080;
+  , port = 5000;
 
 app.use(express.static(__dirname));
 
