@@ -169,4 +169,29 @@ describe('TimedArray', function() {
       });
     });
   });
+  describe('sliceInterval()', function() {
+    var timedArrayA = new TimedArray();
+    timedArrayA.push.apply(timedArrayA, arrayA);
+    it('should ', function() {
+      assert.deepEqual(timedArrayA.sliceInterval(new TimedArray.Interval(true, true, 10, 30)), [
+        arrayA[1],
+        arrayA[2],
+        arrayA[3],
+      ]);
+
+      assert.deepEqual(timedArrayA.sliceInterval(new TimedArray.Interval(false, true, 10, 30)), [
+        arrayA[2],
+        arrayA[3],
+      ]);
+
+      assert.deepEqual(timedArrayA.sliceInterval(new TimedArray.Interval(true, false, 10, 30)), [
+        arrayA[1],
+        arrayA[2],
+      ]);
+
+      assert.deepEqual(timedArrayA.sliceInterval(new TimedArray.Interval(false, false, 10, 30)), [
+        arrayA[2],
+      ]);
+    });
+  });
 });

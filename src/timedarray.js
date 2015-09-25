@@ -49,6 +49,24 @@ class TimedArray extends Array {
   isEmpty() {
     return this.length === 0;
   }
+  indexOfInterval({includeFirst = true, includeLast = true, first, last}) {
+    return [
+      includeFirst
+        ? this.indexAtOrAfterTime(first)
+        : this.indexAfterTime(first)
+      ,
+      includeLast
+        ? this.indexAtOrBeforeTime(last)
+        : this.indexBeforeTime(last)
+    ];
+  }
+  sliceInterval(interval) {
+    let [firstIndex, lastIndex] = this.indexOfInterval(interval);
+    if (firstIndex === -1 || lastIndex === -1 || lastIndex < firstIndex) {
+      return [];
+    }
+    return this.slice(firstIndex, lastIndex + 1);
+  }
   insert(item) {
     let index = this.indexAtOrAfterTime(item.time);
     if (index > -1 && this[index].time === item.time) {
@@ -74,5 +92,19 @@ class TimedArray extends Array {
     return this.slice(0);
   }
 }
+
+class Interval {
+  constructor(includeFirst, includeLast, first, last) {
+    this.includeFirst = includeFirst;
+    this.includeLast = includeLast;
+    this.first = first;
+    this.last = last;
+  }
+  toString() {
+    return (this.includeFirst ? '[' : '(') + this.first + ', ' + this.last + (this.includeLast ? ']' : ')');
+  }
+}
+
+TimedArray.Interval = Interval;
 
 module.exports = TimedArray;
