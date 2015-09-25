@@ -79,6 +79,13 @@ class TimedArray extends Array {
   removeFromIndex(index) {
     return this.splice(index, this.length);
   }
+  removeAtOrAfter(time) {
+    let index = this.indexAtOrAfterTime(time);
+    if (index === -1) {
+      return [];
+    }
+    return this.splice(index, this.length);
+  }
   getFirstTime() {
     return this.isEmpty() ? null : this[0].time;
   }
