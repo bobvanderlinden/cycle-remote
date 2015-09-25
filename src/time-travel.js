@@ -93,6 +93,7 @@ function makeTimeTravelDriver(options) {
           lastTime = newTime;
           return actionEvents;
         } else {
+          lastTime = newTime;
           return Cycle.Rx.Observable.concat(
             stateEvents,
             actionEvents
