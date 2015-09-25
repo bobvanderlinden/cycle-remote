@@ -6,68 +6,72 @@ import {makeTime} from './time';
 
 Cycle.Rx.config.longStackSupport = true;
 
-function makeRemoteDriver(url) {
-  return function remoteDriver(localEvents, driverName) {
-    // TODO: Make a way to forget pre-historic actions and states.
+function packEvents({time, state, action}) {
+  return Cycle.Rx.Observable.merge(
+    time.map(time => ({ type: 'time', time: time })),
+    state.withLatestFrom(time, (state, time) => ({ type: 'state', state: state, time: time })),
+    action.withLatestFrom(time, (action, time) => ({ type: 'action', action: action, time: time }))
+  ).share();
+}
 
-    var localActionEvents = localEvents
+function unpackEvents(events) {
+  let sharedEvents = events.share();
+  return {
+    time: sharedEvents
+      .filter(event => event.type === 'time')
+      .map(event => event.time),
+    state: sharedEvents
+      .filter(event => event.type === 'state')
+      .map(event => event.state),
+    action: sharedEvents
       .filter(event => event.type === 'action')
-      .share()
-      .do(event => console.log('local action', event));
-
-    // Create websocket and send local actions to server.
-    // The server will broadcast actions to other peers.
-    let websocket = makeWebSocket(url)(localActionEvents);
-    let remoteActionEvents = websocket.do(event => console.log('remote action', event));
-
-    var events = Cycle.Rx.Observable.merge(
-      localEvents,
-      remoteActionEvents
-    ).share();
-
-    var timeTravelDriver = makeTimeTravelDriver()(events);
-
-    return {
-      state: timeTravelDriver.state,
-      action: timeTravelDriver.action,
-      packEvents: function(time, state, actions) {
-        return Cycle.Rx.Observable.merge(
-          time.map(time => ({ type: 'time', time: time })),
-          state.withLatestFrom(time, (state, time) => ({ type: 'state', state: state, time: time })),
-          actions.withLatestFrom(time, (action, time) => ({ type: 'action', action: action, time: time }))
-        ).share();
-      }
-    };
+      .map(event => event.action)
   };
 }
 
-function main({DOM,Remote,Time}) {
+function main({DOM, TimeTravel,Time}) {
   let localAction$ = Cycle.Rx.Observable.merge(
     DOM.select('.decrement').events('click').map(ev => -1),
     DOM.select('.increment').events('click').map(ev => +1)
   ).do(action => console.log('localAction$', action));
 
-  let localState$ = Remote.action
-    .startWith(0)
-    .scan((x,y) => x+y)
-    .do(state => console.log('local state', state));
+  let stateEvents$ = TimeTravel.handleActions(function(state, action) {
+      return state + action;
+    })
+    .do(state => console.log('local state', state))
+    .share();
 
-  let state$ = Remote.state
-    .do(state => console.log('state ', state));
+  let localEvent$ = packEvents({
+    time: Time,
+    action: localAction$,
+    state: Cycle.Rx.Observable.empty()
+  })
+  .startWith({ type: 'state', time: 0, state: 0 })
+  .merge(stateEvents$);
+
+  // Create websocket and send local actions to server.
+  // The server will broadcast actions to other peers.
+  let remoteEvent$ = makeWebSocket('ws://' + window.location.host)(localEvent$.filter(event => event.type === 'action'))
+    .do(event => console.log('remote action', event));
+
+  let state$ = TimeTravel.viewState;
+
   return {
-    DOM: state$.map(count =>
+    DOM: Cycle.Rx.Observable.combineLatest(state$, Time, (count, time) => ({count,time}))
+      .map(({count,time}) =>
         h('div', [
           h('button.decrement', 'Decrement'),
           h('button.increment', 'Increment'),
-          h('p', 'Counter: ' + count)
+          h('p', 'Counter: ' + JSON.stringify(count)),
+          h('p', 'Time: ' + time)
         ])
       ),
-    Remote: Remote.packEvents(Time, localState$, localAction$)
+    TimeTravel: Cycle.Rx.Observable.merge(localEvent$, remoteEvent$)
   };
 }
 
 Cycle.run(main, {
   DOM: makeDOMDriver('#main-container'),
-  Remote: makeRemoteDriver('ws://' + window.location.host),
+  TimeTravel: makeTimeTravelDriver({}),
   Time: makeTime
 });

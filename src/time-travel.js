@@ -28,6 +28,7 @@ function assertEvent(event) {
 }
 
 function makeTimeTravelDriver(options) {
+  console.log('options',options);
   function debug(...args) {
     if (options.debug) {
       console.log.apply(console, args);
@@ -136,7 +137,7 @@ function makeTimeTravelDriver(options) {
         });
         debug(pendingActions.length, 'actions to process');
         if (pendingActions.length === 0) {
-          return Cycle.Rx.Observable.of({ type: 'state', time: time, state: state })
+          return Cycle.Rx.Observable.of({ type: 'state', time: time, state: state });
         } else {
           var nextPendingAction = pendingActions[0];
           return Cycle.Rx.Observable.concat(
@@ -182,8 +183,16 @@ function makeTimeTravelDriver(options) {
 
     return {
       outputEvents,
-      state: outputEvents.filter(event => event.type === 'state').map(event => event.state),
-      action: outputEvents.filter(event => event.type === 'action').map(event => event.action)
+      handleActions: function(update) {
+        let actionEvent$ = this.outputEvents.filter(event => event.type === 'action');
+        let state$ = this.outputEvents.filter(event => event.type === 'state').map(event => event.state);
+        return actionEvent$.withLatestFrom(state$, function(actionEvent, state) {
+          let newState = update(state, actionEvent.action);
+          console.log(state, actionEvent, newState);
+          return { type: 'state', time: actionEvent.time, state: newState };
+        });
+      },
+      viewState: events$.map(_ => timedStates.getAtOrBeforeTime(lastTime)).map(timedState => timedState && timedState.state).distinctUntilChanged()
     };
   };
 }
