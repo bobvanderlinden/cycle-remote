@@ -3,8 +3,7 @@ var server = require('http').createServer()
   , WebSocketServer = require('ws').Server
   , wss = new WebSocketServer({ server: server })
   , express = require('express')
-  , app = express()
-  , port = 5000;
+  , app = express();
 
 app.use(express.static(__dirname));
 
@@ -43,6 +42,6 @@ wss.on('connection', function connection(ws) {
 });
 
 server.on('request', app);
-server.listen(port, function () {
+server.listen(process.env.PORT || 5000, function () {
   console.log('Listening on ' + server.address().address + ':' + server.address().port);
 });
